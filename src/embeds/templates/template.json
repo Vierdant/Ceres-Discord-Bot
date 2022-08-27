@@ -1,0 +1,46 @@
+{
+  "author": [
+    {
+      "name": "Vierdant",
+      "url": null,
+      "iconURL": null
+    }
+  ],
+  "title": "hello",
+  "url": "https://discordjs.guide/popular-topics/embeds.html#using-the-embed-constructor",
+  "color": "#FFFFFF",
+  "thumbnail": null,
+  "description": "THIS IS A DESCRIPTION",
+  "image": null,
+  "timestamp": "date",
+
+  "footer": [
+    {
+      "text": "hello",
+      "iconURL": null
+    }
+  ],
+
+  "fields": [
+    {
+      "name": "field 1",
+      "value": "value 1",
+      "inline": true
+    },
+    {
+      "name": "field 2",
+      "value": "value 2",
+      "inline": true
+    },
+    {
+      "name": "field 3",
+      "value": "value 3",
+      "inline": true
+    },
+    {
+      "name": "field 4",
+      "value": "value 4",
+      "inline": true
+    }
+  ]
+}

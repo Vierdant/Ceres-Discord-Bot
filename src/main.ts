@@ -1,9 +1,14 @@
 import "reflect-metadata";
 
+import * as dotenv from 'dotenv';
 import { dirname, importx } from "@discordx/importer";
 import type { Interaction, Message } from "discord.js";
 import { IntentsBitField } from "discord.js";
 import { Client } from "discordx";
+import { AppDataSource } from "./database/data-source.js";
+
+
+dotenv.config();
 
 export const bot = new Client({
   // To only use global commands (use @Guild for specific guild command), comment this line
@@ -34,6 +39,10 @@ bot.once("ready", async () => {
   // Synchronize applications commands with Discord
   await bot.initApplicationCommands();
 
+
+  await AppDataSource.initialize().then(async () => {
+    console.log("Connected to database...")
+  }).catch(error => console.log(error));
   // To clear all guild commands, uncomment this line,
   // This is useful when moving from guild commands to global commands
   // It must only be executed once
@@ -59,7 +68,7 @@ async function run() {
   // await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
 
   // The following syntax should be used in the ECMAScript environment
-  await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
+  await importx(dirname(import.meta.url) + "/{events,commands,embeds,reviews,tickets}/**/*.{ts,js}");
 
   // Let's start the bot
   if (!process.env.BOT_TOKEN) {

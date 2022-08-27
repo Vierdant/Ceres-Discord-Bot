@@ -1,0 +1,19 @@
+{
+    "type": "mysql",
+    "host": "eu01-sql.pebblehost.com",
+    "port": 3306,
+    "username": "customer_345849_ceres",
+    "password": "PebbleCeresKY#$MONEY83#accessBase",
+    "database": "customer_345849_ceres",
+    "synchronize": true,
+    "logging": false,
+    "entities": [
+       "src/database/entity/**/*.ts"
+    ],
+    "migrations": [
+       "src/database/migration/**/*.ts"
+    ],
+    "subscribers": [
+     "src/database/subscriber/**/*.ts"
+    ]
+ }
