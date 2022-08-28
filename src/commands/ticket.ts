@@ -1,4 +1,5 @@
-import { ActionRowBuilder, ApplicationCommandOptionType, Channel, ChannelType, CommandInteraction, EmbedBuilder, GuildChannelManager, GuildMember, messageLink, PermissionFlagsBits, Role, TextChannel, User } from "discord.js";
+import { error } from "console";
+import { ActionRowBuilder, ApplicationCommandOptionType, ChannelType, CommandInteraction, EmbedBuilder, GuildChannelManager, GuildMember, MessageActionRowComponentBuilder, messageLink, PermissionFlagsBits, Role, TextChannel, User } from "discord.js";
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
 import { IsNull, Not } from "typeorm";
 import { AppDataSource } from "../database/data-source.js";
@@ -12,15 +13,12 @@ import { Util } from "../util.js";
 @SlashGroup({
     name: "list",
     description: "list options",
-    root: "ticket" // need to specify root aka parent
+    root: "ticket"
   })
 export class ticketCommand {
 
     /**
     * unclaim a ticket
-    * note that only the user who has claimed the ticket can unclaim it
-    * @param forced admin option to force unclaim
-    * @param interaction the interaction with the ticket command
     */
     @Slash("unclaim", {defaultMemberPermissions: PermissionSet.STAFF_CHAT_ACCESS.toArrayList()})
     @SlashGroup("ticket")
@@ -31,16 +29,11 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
 
         // if member is an admin, record it
         const isAdmin = Util.isAdmin(interaction.member as GuildMember);
         
-        // if channel isn't in support channel, cancel
+        // if channel isn't in support category, cancel
         if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
             interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
             return;
@@ -53,44 +46,47 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
         
-        const ticketType = ticketData?.type;
-        const ticketStatus = ticketData?.status;
-        const header = ticketData?.header;
-        const handler = ticketData?.handler;
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return;
+        }
 
-        if (ticketStatus === "LOCKED") {
-            interaction.reply({ content: `This ${ticketType} is locked. Locked ${ticketType}s are not eligable to changes.`, ephemeral: true})
+        if (data.status === "LOCKED") {
+            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
             return;
         }
 
         // if handler is null then the ticket is not claimed by anyone. So, cancel
-        if (handler === null) {
-            interaction.reply({ content: `This ${ticketType} is not claimed by anyone. Failed to unclaim an unclaimed ${ticketType}.`, ephemeral: true})
+        if (data.handler === null) {
+            interaction.reply({ content: `This ${data.type} is not claimed by anyone. Failed to unclaim an unclaimed ${data.type}.`, ephemeral: true})
             return;
         }
 
         // if user doesn't own the ticket and forced is not true. Second check only is possible if user is admin
-        if (handler != interaction.user.id && forced != true) {
-            interaction.reply({ content: `you can't unclaim a ${ticketType} that isn't claimed by you.`, ephemeral: true})
+        if (data.handler != interaction.user.id && forced != true) {
+            interaction.reply({ content: `you can't unclaim a ${data.type} that isn't claimed by you.`, ephemeral: true})
             return;
         }
         
 
-        interaction.channel?.messages.fetch(header!).then(message => {
+        interaction.channel?.messages.fetch(data.header!).then(message => {
             const editedEmbed = new EmbedBuilder(message.embeds[0].data)
                 .setFooter(null)
 
             const claimEmbed = new EmbedBuilder()
                 .setColor("#FFEA7F")
-                .setAuthor({ name: `${Util.capFirst(ticketType!)} unclaimed`, iconURL: interaction.user.displayAvatarURL() })
-                .setDescription(`Your ${ticketType} was unclaimed by <@${interaction.user.id}>.\nIf you think this is a mistake or something that should not have happened\nplease tag a manager.`)
+                .setAuthor({ name: `${Util.capFirst(data.type!)} unclaimed`, iconURL: interaction.user.displayAvatarURL() })
+                .setDescription(`Your ${data.type} was unclaimed by <@${interaction.user.id}>.\nIf you think this is a mistake or something that should not have happened\nplease tag a manager.`)
 
-            const editedComponenets: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+            const editedComponenets: ActionRowBuilder<MessageActionRowComponentBuilder> 
+            = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                 TicketButtons.CLAIM.toValue(),
                 TicketButtons.LOCK.toValue(), 
-                TicketButtons.CLOSE.toValue());
+                TicketButtons.CLOSE.toValue()
+            );
             
             message.edit({embeds: [editedEmbed, message.embeds[1]], components: [editedComponenets]})
             interaction.reply({embeds: [claimEmbed], ephemeral: false})
@@ -123,11 +119,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
 
         // if member is an admin, record it
         const isAdmin = Util.isAdmin(interaction.member as GuildMember);
@@ -145,43 +136,44 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
         
-        const ticketType = ticketData?.type;
-        const ticketStatus = ticketData?.status;
-        const header = ticketData?.header;
-        const handler = ticketData?.handler;
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return;
+        }
 
-        if (ticketStatus === "LOCKED") {
-            interaction.reply({ content: `This ${ticketType} is locked. Locked ${ticketType}s are not eligable to changes.`, ephemeral: true})
+        if (data.status === "LOCKED") {
+            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
             return;
         }
 
         // if user doesn't own the ticket and forced is not true. Second check only is possible if user is admin
-        if (handler != interaction.user.id && handler != null && forced != true) {
-            interaction.reply({ content: `you can't assign a ${ticketType} to someone else when the ${ticketType} isn't claimed by you.`, ephemeral: true})
+        if (data.handler != interaction.user.id && data.handler != null && forced != true) {
+            interaction.reply({ content: `you can't assign a ${data.type} to someone else when the ${data.type} isn't claimed by you.`, ephemeral: true})
             return;
         }
 
-        let assigneeMember = await interaction.guild?.members.fetch(who.id)
+        const assigneeMember = await interaction.guild?.members.fetch(who.id)
         const assignee = assigneeMember === undefined ? who : assigneeMember.user;
 
         if (!Util.isStaff(assigneeMember as GuildMember)) {
-            interaction.reply({ content: `You are not able to assign a ${ticketType} to a someone that is not a staff member`, ephemeral: true})
+            interaction.reply({ content: `You are not able to assign a ${data.type} to a someone that is not a staff member`, ephemeral: true})
             return;
         }
 
-        interaction.channel?.messages.fetch(header!).then(message => {
+        interaction.channel?.messages.fetch(data.header!).then(message => {
             const editedEmbed = new EmbedBuilder(message.embeds[0].data)
                 .setFooter({ 
-                    text: `This ${ticketType} has been assigned to ${assignee.username} by ${interaction.user.username}`, 
+                    text: `This ${data.type} has been assigned to ${assignee.username} by ${interaction.user.username}`, 
                     iconURL: assignee.displayAvatarURL() 
                 })
 
             const claimEmbed = new EmbedBuilder()
                 .setColor("#FFEA7F")
-                .setAuthor({ name: `${Util.capFirst(ticketType!)} was assigned`, iconURL: assignee.displayAvatarURL() })
-                .setDescription(`Your ${ticketType} will now be handled by <@${assignee.id}>`)
+                .setAuthor({ name: `${Util.capFirst(data.type!)} was assigned`, iconURL: assignee.displayAvatarURL() })
+                .setDescription(`Your ${data.type} will now be handled by <@${assignee.id}>`)
                 .setFooter({
                     text: `Assigned by ${interaction.user.username}`,
                     iconURL: interaction.user.displayAvatarURL()
@@ -189,7 +181,7 @@ export class ticketCommand {
 
             const dmEmbed = new EmbedBuilder()
                 .setColor("#B580BD")
-                .setTitle(`You were assigned a ${ticketType}`)
+                .setTitle(`You were assigned a ${data.type}`)
                 .setDescription("*If you believe this is a mistake, please contact the assigner or a manager*")
                 .addFields(
                     {
@@ -204,15 +196,17 @@ export class ticketCommand {
                     },
                     {
                         name: "Created By",
-                        value: `<@${ticketData?.user}>`,
+                        value: `<@${data.user}>`,
                         inline: true
                     }
                 )
                 .setTimestamp(Date.now())
 
-            const editedComponenets: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+            const editedComponenets: ActionRowBuilder<MessageActionRowComponentBuilder> 
+            = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                 TicketButtons.LOCK.toValue(), 
-                TicketButtons.CLOSE.toValue());
+                TicketButtons.CLOSE.toValue()
+            );
             
             message.edit({embeds: [editedEmbed, message.embeds[1]], components: [editedComponenets]})
             interaction.reply({embeds: [claimEmbed], ephemeral: false})
@@ -244,12 +238,8 @@ export class ticketCommand {
         interaction: CommandInteraction
     )
     // command execution
-    {     
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
+    {
+
         // if channel isn't in support channel, cancel
         if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
             interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
@@ -257,18 +247,21 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        
-        const ticketType = ticketData?.type;
-        const ticketStatus = ticketData?.status;
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
 
-        if (ticketStatus === "LOCKED") {
-            interaction.reply({ content: `This ${ticketType} is locked. Locked ${ticketType}s are not eligable to changes.`, ephemeral: true})
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return;
+        }
+
+        if (data.status === "LOCKED") {
+            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
             return;
         }
 
 
-        let addedMember = await interaction.guild?.members.fetch(who.id)
+        const addedMember = await interaction.guild?.members.fetch(who.id)
         const added = addedMember === undefined ? who : addedMember.user;
 
         if (Util.isStaff(addedMember as GuildMember)) {
@@ -276,7 +269,7 @@ export class ticketCommand {
             return;
         }
 
-        let viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
+        const viewers = JSON.parse(data.viewers === undefined ? "[]" : data.viewers as string);
         
         if (viewers.includes(added.id)) {
             interaction.reply({ content: `Member already has access to this channel.\nIf you think that is not true please contact a manager.`, ephemeral: true})
@@ -288,7 +281,7 @@ export class ticketCommand {
         const infoEmbed = new EmbedBuilder()
             .setColor("#B3D998")
             .setAuthor({ name: `User added`, iconURL: added.displayAvatarURL() })
-            .setDescription(`<@${added.id}> was added to the ${ticketType} channel.\nThey are able to view the ${ticketType} and send messages.`)
+            .setDescription(`<@${added.id}> was added to the ${data.type} channel.\nThey are able to view the ${data.type} and send messages.`)
             .setFooter({
                 text: `Added by ${interaction.user.username}`,
                 iconURL: interaction.user.displayAvatarURL()
@@ -296,13 +289,13 @@ export class ticketCommand {
 
         const dmEmbed = new EmbedBuilder()
             .setColor("#B580BD")
-            .setTitle(`You were added to a ${ticketType}`)
+            .setTitle(`You were added to a ${data.type}`)
             .setDescription("*If you believe this is a mistake, please contact the staff member that added you*")
             .setTimestamp(Date.now())
             .addFields(
                 { name: "Ticket", value: `<#${interaction.channelId}>`, inline: true },
                 { name: "Added By", value: `<@${interaction.user.id}>`, inline: true },
-                { name: "Created By", value: `<@${ticketData?.user}>`, inline: true }
+                { name: "Created By", value: `<@${data.user}>`, inline: true }
             )
             
         interaction.reply({embeds: [infoEmbed], ephemeral: false})
@@ -339,11 +332,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
         // if channel isn't in support channel, cancel
         if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
             interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
@@ -351,26 +339,29 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
         
-        const ticketType = ticketData?.type;
-        const ticketStatus = ticketData?.status;
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return;
+        }
 
-        if (ticketStatus === "LOCKED") {
-            interaction.reply({ content: `This ${ticketType} is locked. Locked ${ticketType}s are not eligable to changes.`, ephemeral: true})
+        if (data.status === "LOCKED") {
+            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
             return;
         }
 
 
-        let addedMember = await interaction.guild?.members.fetch(who.id)
+        const addedMember = await interaction.guild?.members.fetch(who.id)
         const added = addedMember === undefined ? who : addedMember.user;
 
         if (Util.isStaff(addedMember as GuildMember)) {
-            interaction.reply({ content: `You can't remove a staff member from this ${ticketType}...`, ephemeral: true})
+            interaction.reply({ content: `You can't remove a staff member from this ${data.type}...`, ephemeral: true})
             return;
         }
 
-        let viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
+        const viewers = JSON.parse(data.viewers === undefined ? "[]" : data.viewers as string);
         
         if (!viewers.includes(added.id)) {
             interaction.reply({ content: `${added.username} already has no access to this channel.`, ephemeral: true})
@@ -382,7 +373,7 @@ export class ticketCommand {
         const infoEmbed = new EmbedBuilder()
             .setColor("#FC897E")
             .setAuthor({ name: `User removed`, iconURL: added.displayAvatarURL() })
-            .setDescription(`<@${added.id}> was removed from the ${ticketType} channel.\nThey are no longer able to view the ${ticketType} or send messages.`)
+            .setDescription(`<@${added.id}> was removed from the ${data.type} channel.\nThey are no longer able to view the ${data.type} or send messages.`)
             .addFields({
                 name: "Reason",
                 value: reason,
@@ -395,13 +386,13 @@ export class ticketCommand {
 
         const dmEmbed = new EmbedBuilder()
             .setColor("#B580BD")
-            .setTitle(`You were removed from a ${ticketType}`)
+            .setTitle(`You were removed from a ${data.type}`)
             .setDescription("*If you believe this is a mistake, please contact the staff member that removed you*")
             .setTimestamp(Date.now())
             .addFields(
                 { name: "Ticket", value: `<#${interaction.channelId}>`, inline: true },
                 { name: "Removed By", value: `<@${interaction.user.id}>`, inline: true },
-                { name: "Created By", value: `<@${ticketData?.user}>`, inline: true },
+                { name: "Created By", value: `<@${data.user}>`, inline: true },
                 { name: "Reason", value: reason, inline: false }
             )
             
@@ -411,7 +402,7 @@ export class ticketCommand {
             channel.send({embeds: [dmEmbed]})
         })
 
-        let index = viewers.indexOf(added.id);
+        const index = viewers.indexOf(added.id);
         if (index !== -1) {
             viewers.splice(index, 1);
         }
@@ -439,12 +430,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
-
         // if channel isn't in support channel, cancel
         if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
             interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
@@ -452,39 +437,42 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        const ticketType = ticketData?.type;
-        const ticketHandler = ticketData?.handler;
-        const ticketStatus = ticketData?.status;
-        const userId = ticketData?.user;
-        const user = await interaction.guild?.members.fetch(userId as string)
-
-        if (ticketStatus === "LOCKED") {
-            interaction.reply({ content: `This ${ticketType} is locked. Locked ${ticketType}s are not eligable to changes.`, ephemeral: true})
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
             return;
         }
         
-        if (ticketStatus === "PENDING") {
-            interaction.reply({ content: `This ${ticketType} is already pending.`, ephemeral: true})
+        const user = await interaction.guild?.members.fetch(data.user)
+
+        if (data.status === "LOCKED") {
+            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
+            return;
+        }
+        
+        if (data.status === "PENDING") {
+            interaction.reply({ content: `This ${data.type} is already pending.`, ephemeral: true})
             return;
         }
 
-        if (ticketHandler != interaction.user.id) {
-            interaction.reply({ content: `You can't set a ${ticketType} that isn't claimed by you to pending.`, ephemeral: true})
+        if (data.handler != interaction.user.id) {
+            interaction.reply({ content: `You can't set a ${data.type} that isn't claimed by you to pending.`, ephemeral: true})
             return;
         }
         
         const pendingEmbed = new EmbedBuilder()
-            .setTitle(`This ${ticketType} is now pending.`)
+            .setTitle(`This ${data.type} is now pending.`)
             .setColor("#FFEA7F")
-            .setDescription(`The next message sent by a user will\nnotify the staff member handling the ${ticketType}.`)
+            .setDescription(`The next message sent by a user will\nnotify the staff member handling the ${data.type}.`)
             .setTimestamp(Date.now())
             .setFooter({text: `Set by: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL()})
 
         const dmEmbed = new EmbedBuilder()
-            .setTitle(`Your ${ticketType} is now pending.`)
+            .setTitle(`Your ${data.type} is now pending.`)
             .setColor("#FFEA7F")
-            .setDescription(`A ${ticketType} created by you has been set to pending and is now awaiting your response.\nWhen you respond to the ${ticketType}, it will notify the person handling your ${ticketType}.\n\nNote that if there are other users added to the ${ticketType}, a reposne from them\nwill notify the handler as well.`)
+            .setDescription(`A ${data.type} created by you has been set to pending and is now awaiting your response.\nWhen you respond to the ${data.type}, it will notify the person handling your ${data.type}.\n\nNote that if there are other users added to the ${data.type}, a reposne from them\nwill notify the handler as well.`)
             .setTimestamp(Date.now())
             .setFooter({text: `Pending request by: ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL()})
     
@@ -517,11 +505,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
 
         // if channel isn't in support channel, cancel
         if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
@@ -530,17 +513,26 @@ export class ticketCommand {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
 
-        if (ticketData?.header == null) {
-            const ticketComponents: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return;
+        }
+
+        if (data.header == null) {
+            const ticketComponents: ActionRowBuilder<MessageActionRowComponentBuilder> 
+            = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                 TicketButtons.UNLOCK.toValue(), 
                 TicketButtons.LOCK.toValue(), 
-                TicketButtons.CLOSE.toValue());
+                TicketButtons.CLOSE.toValue()
+            );
+
             interaction.reply({ content: "This ticket has no header message. Here's a temporary toolset instead.", ephemeral: true, components: [ticketComponents]})
             return;
         }
-        interaction.channel?.messages.fetch(ticketData?.header!).then(message => {
+        interaction.channel?.messages.fetch(data.header!).then(message => {
             const link = messageLink(interaction.channelId, message.id);
             const embed = new EmbedBuilder()
                 .setColor("#82b2d7")
@@ -565,12 +557,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
-
         // get channel data
         const ticketCollection = await AppDataSource.getRepository(TicketsEntity).find({
             select: {
@@ -630,12 +616,7 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
-          // get channel data
+        // get channel data
         const ticketCollection = await AppDataSource.getRepository(TicketsEntity).find({
             select: {
                 channel: true,
@@ -695,11 +676,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
           // get channel data
         const ticketCollection = await AppDataSource.getRepository(TicketsEntity).find({
             select: {
@@ -749,8 +725,7 @@ export class ticketCommand {
     async insert(
         @SlashOption("channel", { description: "Channel to insert", required: true, type: ApplicationCommandOptionType.Channel, channelTypes: [ChannelType.GuildText] }) channel: TextChannel,
         // type slash option with 2 choices, one for ticket or one for request
-        @SlashChoice({ name: "ticket", value: "ticket"})
-        @SlashChoice({ name: "request", value: "request"})
+        @SlashChoice("ticket", "request")
         @SlashOption("type", { description: "Type of ticket", required: true, type: ApplicationCommandOptionType.String }) type: string,
         @SlashOption("user", { description: "User that created channel", required: true, type: ApplicationCommandOptionType.User }) user: User,
         @SlashOption("handler", { description: "User that will handle the ticket", required: true, type: ApplicationCommandOptionType.User }) handler: User,
@@ -758,11 +733,6 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if member is not staff, cancel
-        if (!Util.isStaff(interaction.member as GuildMember)) {
-            interaction.reply({ content: "You are not able to execute that action.", ephemeral: true})
-            return;
-        }
         // insert channel into the ticket system
         const ticket = new TicketsEntity();
         ticket.channel = channel.id;

@@ -1,5 +1,4 @@
 import { EmbedBuilder } from "discord.js";
-import BodyReadable from "undici/types/readable";
 
 /**
  * Used to generate embeds from templates to shorten code

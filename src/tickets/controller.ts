@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, Guild, GuildChannelManager, GuildMember, ModalBuilder, ModalSubmitInteraction} from "discord.js";
+import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, Guild, GuildChannelManager, GuildMember, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel} from "discord.js";
 import { ButtonComponent, Discord, ModalComponent } from "discordx";
 import { AppDataSource } from "../database/data-source.js";
 import { TicketsEntity } from "../database/entity/tickets.js";
@@ -52,9 +52,11 @@ export class TicketControlButtons {
                 .setDescription(`Your ${ticketType} will be handled by <@${interaction.user.id}>`)
             
             if (ticketData?.header != null || undefined) {
-                const editedComponenets: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+                const editedComponenets: ActionRowBuilder<MessageActionRowComponentBuilder> = 
+                new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                     TicketButtons.LOCK.toValue(), 
-                    TicketButtons.CLOSE.toValue());
+                    TicketButtons.CLOSE.toValue()
+                );
                 
                 message.edit({embeds: [editedEmbed, message.embeds[1]], components: [editedComponenets]})
             }
@@ -94,7 +96,7 @@ export class TicketControlButtons {
             return;
         }
 
-        let viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
+        const viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
         viewers.push(ticketData?.user)
         this.toggleChatAccess(interaction.guild, interaction.channelId, viewers, false);
 
@@ -108,9 +110,11 @@ export class TicketControlButtons {
                 .setDescription(`Your ${ticketType} was locked by <@${interaction.user.id}>`)
 
             if (ticketData?.header != null || undefined) {
-                const editedComponenets: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+                const editedComponenets: ActionRowBuilder<MessageActionRowComponentBuilder> 
+                = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                     TicketButtons.UNLOCK.toValue(),
-                    TicketButtons.CLOSE.toValue());
+                    TicketButtons.CLOSE.toValue()
+                );
                 
                 message.edit({embeds: [editedEmbed, message.embeds[1]], components: [editedComponenets]})
             }
@@ -151,7 +155,7 @@ export class TicketControlButtons {
             return;
         }
         
-        let viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
+        const viewers = JSON.parse(ticketData?.viewers === undefined ? "[]" : ticketData?.viewers as string);
         viewers.push(ticketData?.user)
         this.toggleChatAccess(interaction.guild, interaction.channelId, viewers, true);
 
@@ -165,14 +169,14 @@ export class TicketControlButtons {
                 .setDescription(`Your ${ticketType} was unlocked by <@${interaction.user.id}>`)
 
             if (ticketData?.header != null || undefined) {
-                const editedComponenets: ActionRowBuilder<any> = 
-                handler === null ? new ActionRowBuilder().addComponents(
-                    TicketButtons.CLAIM.toValue,
+                const editedComponenets: ActionRowBuilder<MessageActionRowComponentBuilder> 
+                = !handler ? new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+                    TicketButtons.CLAIM.toValue(),
                     TicketButtons.LOCK.toValue(),
                     TicketButtons.CLOSE.toValue()) :
-                    new ActionRowBuilder().addComponents(
+                    new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
                         TicketButtons.LOCK.toValue(),
-                        TicketButtons.CLOSE.toValue())
+                        TicketButtons.CLOSE.toValue());
                 
                 message.edit({embeds: [editedEmbed, message.embeds[1]], components: [editedComponenets]})
             }
@@ -271,15 +275,16 @@ export class TicketControlModals {
                 { name: "How to Review", value: "Simply click on the button assigned to this message.\nOnce you click on the button, it will **dissappear** for **1 minute**.\n**Spamming** reviews will get you blacklisted from using our services.\n\nThank you <3", inline: false}
             )
         // if it's a request, add review button else add feedback button
-        const reviewButton: ActionRowBuilder<any> = new ActionRowBuilder().addComponents( 
+        const reviewButton: ActionRowBuilder<MessageActionRowComponentBuilder> 
+        = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents( 
             ticketType === "request" ? TicketButtons.REVIEW.toValue() : TicketButtons.FEEDBACK.toValue() 
         )
 
         interaction.reply({ embeds: [closeEmbed], fetchReply: true }).then(message => {
-            this.generateTranscript(interaction.guild?.channels, interaction.channel, ticketData, reason, interaction.user.id)
+            this.generateTranscript(interaction.guild?.channels, interaction.channel as TextChannel, ticketData, reason, interaction.user.id)
             
             setTimeout( () => {
-                message.channel.delete().then(i => {
+                message.channel.delete().then(() => {
                     user?.createDM().then(dm => { dm.send( { embeds: [closedEmbed], components: [reviewButton]} )})
                 });
             }, 10000)
@@ -302,7 +307,7 @@ export class TicketControlModals {
      * @param reason the reason for closing
      * @param userId the user id of who closed the ticket
      */
-    private async generateTranscript(channels: GuildChannelManager | undefined, channel: any, ticketData: TicketsEntity | null, reason: string, userId: string) {
+    private async generateTranscript(channels: GuildChannelManager | undefined, channel: TextChannel, ticketData: TicketsEntity | null, reason: string, userId: string) {
         if (channels === undefined) { console.log("Failed to generate transcript | controller.ts"); return; }
         if (ticketData === null) return;
 
