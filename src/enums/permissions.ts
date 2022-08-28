@@ -1,4 +1,4 @@
-import { PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits, PermissionResolvable } from "discord.js";
 
 // This is not a typical enum class, because they are used to retrive objects that are
 // neither numeric or string based, it's using a trick to be used like an enum.
@@ -31,7 +31,7 @@ export class PermissionSet {
     ])
   
     // private to disallow creating other instances of this type
-    private constructor(private readonly key: string, public readonly value: any) {
+    private constructor(private readonly key: string, public readonly value: PermissionResolvable) {
     }
   
     toString() {

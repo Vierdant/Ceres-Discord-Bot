@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, ModalBuilder, ModalSubmitInteraction, User } from "discord.js";
+import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction } from "discord.js";
 import { Discord, ButtonComponent, ModalComponent } from "discordx";
 import { nanoid } from "nanoid";
 import { TicketButtons } from "../enums/buttons.js";
@@ -16,9 +16,10 @@ export class ReviewService {
             .setComponents(TicketModalEntries.REVIEW.toArray());
 
           
-        const reviewButton: ActionRowBuilder<any> = new ActionRowBuilder().addComponents( 
+        const reviewButton: ActionRowBuilder<MessageActionRowComponentBuilder> 
+        = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents( 
             TicketButtons.REVIEW.toValue()
-        )
+        );
         
         await interaction.user.createDM().then(channel => {
             channel.messages.fetch(interaction.message.id).then(message => {
@@ -97,9 +98,9 @@ export class SupportFeedback {
             .setComponents(TicketModalEntries.REVIEW.toArray());
 
           
-        const reviewButton: ActionRowBuilder<any> = new ActionRowBuilder().addComponents( 
+        const reviewButton: ActionRowBuilder<MessageActionRowComponentBuilder> = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents( 
             TicketButtons.FEEDBACK.toValue()
-        )
+        );
         
         await interaction.user.createDM().then(channel => {
             channel.messages.fetch(interaction.message.id).then(message => {

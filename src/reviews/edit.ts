@@ -1,9 +1,7 @@
-import { ChannelType, EmbedBuilder, ModalSubmitInteraction, User } from "discord.js";
+import { ChannelType, EmbedBuilder, ModalSubmitInteraction } from "discord.js";
 import { Discord, ModalComponent } from "discordx";
-import { nanoid } from "nanoid";
 import { AppDataSource } from "../database/data-source.js";
 import { ReviewsEntity } from "../database/entity/reviews.js";
-import { InsertReview } from "./insert.js";
 
 @Discord()
 export class Edit {
@@ -11,13 +9,15 @@ export class Edit {
     @ModalComponent("edit_service_review")
     async service(interaction: ModalSubmitInteraction) {
 
-        if (!reviewEditingSession.get(interaction.user.id)) {
+        const editingId = reviewEditingSession.get(interaction.user.id);
+
+        if (!editingId) {
             interaction.reply({ content: "You are not currently editing a review.", ephemeral: true})
             return;
         }
 
         // get review by id
-        const reviewEntity = await AppDataSource.manager.findOneBy(ReviewsEntity, { id: reviewEditingSession.get(interaction.user.id) });
+        const reviewEntity = await AppDataSource.manager.findOneBy(ReviewsEntity, { id: editingId });
 
         let ratingDisplay: string = "";
 
@@ -40,8 +40,6 @@ export class Edit {
         for (let i = 1; i <= diffirance; i++) {
             ratingDisplay = ratingDisplay.concat("<:star_empty:1008057471337771128>")
         }
-
-        const id = nanoid(22);
 
         // if discorduser is defined or not null, then fetch the user from discord
         const discorduserObject = discorduser ? await interaction.guild?.members.fetch(discorduser) : null;
@@ -78,7 +76,7 @@ export class Edit {
             .createQueryBuilder()
             .update(ReviewsEntity)
             .set({ discord_user: discorduser, rating: ratingValue, review: review })
-            .where("id = :id", { id: reviewEditingSession.get(interaction.user.id) })
+            .where("id = :id", { id: editingId })
             .execute()
 
         reviewEditingSession.delete(interaction.user.id);
@@ -90,13 +88,15 @@ export class Edit {
     @ModalComponent("edit_product_review")
     async product(interaction: ModalSubmitInteraction) {
         
-        if (!reviewEditingSession.get(interaction.user.id)) {
+        const editingId = reviewEditingSession.get(interaction.user.id);
+
+        if (!editingId) {
             interaction.reply({ content: "You are not currently editing a review.", ephemeral: true})
             return;
         }
 
         // get review by id
-        const reviewEntity = await AppDataSource.manager.findOneBy(ReviewsEntity, { id: reviewEditingSession.get(interaction.user.id) });
+        const reviewEntity = await AppDataSource.manager.findOneBy(ReviewsEntity, { id: editingId });
 
         let ratingDisplay: string = "";
 
@@ -167,11 +167,11 @@ export class Edit {
             .createQueryBuilder()
             .update(ReviewsEntity)
             .set({ product: product, profile_link: userprofile, rating: ratingValue, review: review })
-            .where("id = :id", { id: reviewEditingSession.get(interaction.user.id) })
+            .where("id = :id", { id: editingId })
             .execute()
         
         reviewEditingSession.delete(interaction.user.id);
     }
 }
 
-export let reviewEditingSession = new Map<string, string>();
+export const reviewEditingSession = new Map<string, string>();

@@ -68,7 +68,29 @@ export class TicketButtons {
             .setEmoji("🌟"));
   
     // private to disallow creating other instances of this type
-    private constructor(private readonly key: string, public readonly value: any) {
+    private constructor(private readonly key: string, public readonly value: ButtonBuilder) {
+    }
+  
+    toString() {
+        return this.key;
+    }
+    
+    // get the value as in the button
+    toValue() {
+        return this.value;
+    }
+}
+
+export class EssentialButtons {
+    static readonly VERIFY  = new EssentialButtons('VERIFY', 
+        // Button to open a ticket channel
+        new ButtonBuilder()
+            .setCustomId("verify_server_member")
+            .setLabel("Verify")
+            .setStyle(ButtonStyle.Success));
+  
+    // private to disallow creating other instances of this type
+    private constructor(private readonly key: string, public readonly value: ButtonBuilder) {
     }
   
     toString() {

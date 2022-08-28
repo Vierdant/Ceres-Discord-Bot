@@ -1,4 +1,4 @@
-import {Entity, Column, PrimaryGeneratedColumn, PrimaryColumn} from "typeorm";
+import {Entity, Column, PrimaryColumn} from "typeorm";
 
 @Entity({ name: "Service_Reviews"} )
 export class ReviewsEntity {

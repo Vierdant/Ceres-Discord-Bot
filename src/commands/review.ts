@@ -78,7 +78,7 @@ export class ReviewCommand {
                 // create dm with user then send message
                 user.createDM().then(channel => {
                     channel.send({ content: `Your review with id: *${reviewId}* has been removed.\nIf you think this is a mistake, please contact an administrator.` });
-                }).catch(err => {
+                }).catch(() => {
                     interaction.reply({ content: "Could not send message to user **but** review was removed.", ephemeral: true });
                 });
             }

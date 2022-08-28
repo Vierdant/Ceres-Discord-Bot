@@ -1,9 +1,10 @@
 import { EmbedBuilder } from "discord.js";
+import BodyReadable from "undici/types/readable";
 
 /**
  * Used to generate embeds from templates to shorten code
  * Note that templates use a specific formatting in JSON
- * look in: @see ./templates
+ * @see ./templates
  */
 export class EmbedTemplate {
 
@@ -16,51 +17,51 @@ export class EmbedTemplate {
     }
 
     /**
-     * Loads the requested template from a JSON
+     * Loads the requested template from a JSON file
      * @returns EmbedBuilder setup with loaded settings from a JSON file
      */
     public async load(): Promise<EmbedBuilder> {
         const raw = await this.fetchFile()
         const data = raw["default"]
         
-        if (data["author"] != null) {
+        if (data["author"]) {
             this.embed.setAuthor({ name: data["author"][0].name, url: data["author"][0].url, iconURL: data["author"][0].iconURL})
         }
 
-        if (data.title != null) {
+        if (data.title) {
             this.embed.setTitle(data.title)
         }
 
-        if (data.url != null) {
+        if (data.url) {
             this.embed.setURL(data.url)
         }
 
-        if (data.color != null) {
+        if (data.color) {
             this.embed.setColor(data.color)
         }
 
-        if (data.thumbnail != null) {
+        if (data.thumbnail) {
             this.embed.setThumbnail(data.thumbnail)
         }
 
-        if (data.description != null) {
+        if (data.description) {
             this.embed.setDescription(data.description)
         }
         
-        if (data.image != null) {
+        if (data.image) {
             this.embed.setDescription(data.image)
         }
         
-        if (data.timestamp != null) {
+        if (data.timestamp) {
             this.embed.setTimestamp(data.timestamp == "now" ? Date.now() : parseInt(data.timestamp))
         }
 
-        if (data["footer"] != null) {
+        if (data["footer"]) {
             this.embed.setFooter({ text: data["footer"][0].text, iconURL: data["footer"][0].iconURL })
         }
 
-        if (data["fields"] != null) {
-            for (let field of data["fields"]) {
+        if (data["fields"]) {
+            for (const field of data["fields"]) {
                 this.embed.addFields({ name: field.name, value: field.value, inline: field.inline })
             }
         }
@@ -72,9 +73,9 @@ export class EmbedTemplate {
      * @returns a json body containing information used to generate embed templates
      */
     private async fetchFile(): Promise<any> {
-        let data = await import(`./templates/${this.fileName}.json`, {assert: { type: 'json' }});
+        const data = await import(`./templates/${this.fileName}.json`, {assert: { type: 'json' }});
         //const data = fs.readFileSync(`embeds/templates/${this.fileName}.json`)
-        if (data != null) {
+        if (data) {
             return data;
         }
     }

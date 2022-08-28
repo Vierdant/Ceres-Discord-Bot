@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, Message, ModalBuilder, ModalSubmitInteraction, Options, TextBasedChannel, TextChannel, User } from "discord.js";
+import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, Message, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextChannel, User } from "discord.js";
 import { ButtonComponent, ModalComponent, Discord } from "discordx";
 import { v4 as uuid } from "uuid";
 import { EmbedTemplate } from "../embeds/template.js";
@@ -52,10 +52,12 @@ export class CreateTicket {
             );
         
         // essential buttons to be displayed on the header message
-        const ticketComponents: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+        const ticketComponents: ActionRowBuilder<MessageActionRowComponentBuilder> 
+        = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
             TicketButtons.CLAIM.toValue(), 
             TicketButtons.LOCK.toValue(), 
-            TicketButtons.CLOSE.toValue());
+            TicketButtons.CLOSE.toValue()
+        );
 
         interaction.guild?.channels.create({
             parent: process.env.TICKET_CATEGORY, 
@@ -166,10 +168,12 @@ export class CreateRequest {
             );
         
         // essential buttons to be displayed on the header message
-        const ticketComponents: ActionRowBuilder<any> = new ActionRowBuilder().addComponents(
+        const ticketComponents: ActionRowBuilder<MessageActionRowComponentBuilder> 
+        = new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
             TicketButtons.CLAIM.toValue(), 
             TicketButtons.LOCK.toValue(), 
-            TicketButtons.CLOSE.toValue());
+            TicketButtons.CLOSE.toValue()
+        );
 
         interaction.guild?.channels.create({
             parent: process.env.COMMISSION_CATEGORY, 

@@ -1,4 +1,4 @@
-import { ChannelType, EmbedBuilder, ModalSubmitInteraction, User } from "discord.js";
+import { ChannelType, EmbedBuilder, ModalSubmitInteraction } from "discord.js";
 import { Discord, ModalComponent } from "discordx";
 import { nanoid } from "nanoid";
 import { InsertReview } from "./insert.js";
