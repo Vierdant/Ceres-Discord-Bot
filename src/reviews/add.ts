@@ -1,7 +1,6 @@
-import { ChannelType, EmbedBuilder, ModalSubmitInteraction } from "discord.js";
+import { ChannelType, ModalSubmitInteraction } from "discord.js";
 import { Discord, ModalComponent } from "discordx";
 import { nanoid } from "nanoid";
-import { ReviewsEntity } from "../database/entity/reviews.js";
 import { ProductReviewEmbed, ServiceReviewEmbed } from "./display.js";
 import { InsertReview } from "./db.js";
 

@@ -1,7 +1,6 @@
-import { ActionRowBuilder, ButtonInteraction, ChannelType, EmbedBuilder, MessageActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, StringMappedInteractionTypes } from "discord.js";
+import { ButtonInteraction, ChannelType, ModalBuilder, ModalSubmitInteraction } from "discord.js";
 import { Discord, ButtonComponent, ModalComponent } from "discordx";
 import { nanoid } from "nanoid";
-import { TicketButtons } from "../enums/buttons.js";
 import { TicketModalEntries } from "../enums/textfields.js";
 import { FeedbackReviewEmbed, ServiceReviewEmbed } from "../reviews/display.js";
 import { InsertReview } from "../reviews/db.js";

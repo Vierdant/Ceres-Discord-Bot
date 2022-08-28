@@ -649,6 +649,9 @@ export class ticketCommand {
         })
     }
 
+    /**
+     * Common condtions that shoudl be done in all commands
+     */
     private async ValidateTicketCommand(interaction: CommandInteraction, conditions: {
         category?: boolean,
         force?: boolean,
