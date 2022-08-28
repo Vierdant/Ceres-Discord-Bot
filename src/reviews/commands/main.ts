@@ -1,9 +1,9 @@
 import { ApplicationCommandOptionType, CommandInteraction, ModalBuilder, PermissionFlagsBits } from "discord.js";
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx";
-import { AppDataSource } from "../database/data-source.js";
-import { ReviewsEntity } from "../database/entity/reviews.js";
-import { ReviewModalEntries } from "../enums/textfields.js";
-import { reviewEditingSession } from "../reviews/edit.js";
+import { AppDataSource } from "../../database/data-source.js";
+import { ReviewsEntity } from "../../database/entity/reviews.js";
+import { ReviewModalEntries } from "../../enums/textfields.js";
+import { reviewEditingSession } from "../edit.js";
 
 @Discord()
 @SlashGroup({ name: "review", description: "Reviews commands" })

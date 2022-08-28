@@ -272,7 +272,7 @@ export class TicketControlModals {
             .addFields(
                 { name: "Closed by", value: `<@${interaction.user.id}>`, inline: false},
                 { name: "Reason", value: reason, inline: false },
-                { name: "How to Review", value: "Simply click on the button assigned to this message.\nOnce you click on the button, it will **dissappear** for **1 minute**.\n**Spamming** reviews will get you blacklisted from using our services.\n\nThank you <3", inline: false}
+                { name: "How to Review", value: "Simply click on the button assigned to this message.\n\nThank you!", inline: false}
             )
         // if it's a request, add review button else add feedback button
         const reviewButton: ActionRowBuilder<MessageActionRowComponentBuilder> 

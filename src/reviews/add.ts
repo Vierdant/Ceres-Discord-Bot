@@ -29,7 +29,7 @@ export class AddReview {
 
         if (reviewChannel?.type === ChannelType.GuildText) {
             reviewChannel.send({ embeds: [embed] }).then(message => {
-                InsertReview.review(id, "service", discordMemberObject!.user, ratingValue, review, message.id, null, null);
+                InsertReview.review(id, "service", discordMemberObject ? discordMemberObject!.user : null, ratingValue, review, message.id, null, null);
             })
         }
 

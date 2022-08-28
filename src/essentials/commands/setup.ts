@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ApplicationCommandOptionType, ChannelType, CommandInteraction, MessageActionRowComponentBuilder, PermissionFlagsBits, TextChannel } from "discord.js";
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx";
-import { EmbedTemplate } from "../embeds/template.js";
-import { EssentialButtons, TicketButtons } from "../enums/buttons.js"
+import { EmbedTemplate } from "../../embeds/template.js";
+import { EssentialButtons, TicketButtons } from "../../enums/buttons.js"
 
 /**
  * Represents a command that sets up displayable information for different channels
