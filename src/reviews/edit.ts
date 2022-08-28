@@ -1,4 +1,4 @@
-import { ChannelType, EmbedBuilder, ModalSubmitInteraction } from "discord.js";
+import { ChannelType, ModalSubmitInteraction } from "discord.js";
 import { Discord, ModalComponent } from "discordx";
 import { AppDataSource } from "../database/data-source.js";
 import { ReviewsEntity } from "../database/entity/reviews.js";
