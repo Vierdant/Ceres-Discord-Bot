@@ -21,34 +21,34 @@ export class PendingListener {
         }
 
         // get channel data
-        const ticketData = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: message.channel?.id});
-        const ticketStatus = ticketData?.status;
-        const userId = ticketData?.user;
-        const ticketType = ticketData?.type;
-        const handlerId = ticketData?.handler;
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: message.channel?.id});
         
-        if (ticketStatus != "PENDING") {
+        if (!data) {
+            return;
+        }
+        
+        if (data.status != "PENDING") {
             return;
         }
 
-        const handler = await message.guild?.members.fetch(handlerId as string)
+        const handler = await message.guild?.members.fetch(data.handler as string)
         
         const embed = new EmbedBuilder()
-            .setTitle(`A pending ${ticketType} received a reponse`)
+            .setTitle(`A pending ${data.type} received a reponse`)
             .setColor("#FFEA7F")
             .setTimestamp(Date.now())
             .addFields(
-                { name: `${Util.capFirst(ticketType!)}`, value: `<#${message.channelId}>`, inline: true},
+                { name: `${Util.capFirst(data.type!)}`, value: `<#${message.channelId}>`, inline: true},
                 { name: "Response by", value: `<@${message.author.id}>`, inline: true},
-                { name: "Created by", value: `<@${userId}>`, inline: true},
-                { name: "Note", value: `Please respond to the ${ticketType} at your earliest convenience.`, inline: false}
+                { name: "Created by", value: `<@${data.user}>`, inline: true},
+                { name: "Note", value: `Please respond to the ${data.type} at your earliest convenience.`, inline: false}
             )
 
         handler?.createDM().then(channel => {
             channel.send({embeds: [embed]})
         })
 
-        message.channel.send({ content: `<@${handlerId}>`}).then(message => {
+        message.channel.send({ content: `<@${data.handler}>`}).then(message => {
             message.delete();
         })
 

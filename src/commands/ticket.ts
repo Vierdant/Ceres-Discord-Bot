@@ -30,47 +30,18 @@ export class ticketCommand {
     // command execution
     {
 
-        // if member is an admin, record it
-        const isAdmin = Util.isAdmin(interaction.member as GuildMember);
-        
-        // if channel isn't in support category, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
+        const validation = await this.ValidateTicketCommand(interaction, {
+            category: true,
+            force: true,
+            forceStatus: forced,
+            ifLocked: true,
+            ifNotClaimed: true,
+            notclaimedByYouWithForce: true,
+        });
 
-        // if command is being forced by someone that isn't admin, cancel
-        if (forced === true && isAdmin === false) {
-            interaction.reply({ content: "Forcing unclaim is an admin only action.", ephemeral: true})
-            return;
-        }
+        if (!validation.ok) return;
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
-
-        if (data.status === "LOCKED") {
-            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
-            return;
-        }
-
-        // if handler is null then the ticket is not claimed by anyone. So, cancel
-        if (data.handler === null) {
-            interaction.reply({ content: `This ${data.type} is not claimed by anyone. Failed to unclaim an unclaimed ${data.type}.`, ephemeral: true})
-            return;
-        }
-
-        // if user doesn't own the ticket and forced is not true. Second check only is possible if user is admin
-        if (data.handler != interaction.user.id && forced != true) {
-            interaction.reply({ content: `you can't unclaim a ${data.type} that isn't claimed by you.`, ephemeral: true})
-            return;
-        }
-        
+        const data = validation.data!;
 
         interaction.channel?.messages.fetch(data.header!).then(message => {
             const editedEmbed = new EmbedBuilder(message.embeds[0].data)
@@ -120,48 +91,19 @@ export class ticketCommand {
     // command execution
     {
 
-        // if member is an admin, record it
-        const isAdmin = Util.isAdmin(interaction.member as GuildMember);
-        
-        // if channel isn't in support channel, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
+        const validation = await this.ValidateTicketCommand(interaction, {
+            category: true,
+            force: true,
+            forceStatus: forced,
+            ifLocked: true,
+            notclaimedByYouWithForce: true,
+            assignee: who,
+        });
 
-        // if command is being forced by someone that isn't admin, cancel
-        if (forced === true && isAdmin === false) {
-            interaction.reply({ content: "Forcing assign is an admin only action.", ephemeral: true})
-            return;
-        }
+        if (!validation.ok) return;
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
-
-        if (data.status === "LOCKED") {
-            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
-            return;
-        }
-
-        // if user doesn't own the ticket and forced is not true. Second check only is possible if user is admin
-        if (data.handler != interaction.user.id && data.handler != null && forced != true) {
-            interaction.reply({ content: `you can't assign a ${data.type} to someone else when the ${data.type} isn't claimed by you.`, ephemeral: true})
-            return;
-        }
-
-        const assigneeMember = await interaction.guild?.members.fetch(who.id)
-        const assignee = assigneeMember === undefined ? who : assigneeMember.user;
-
-        if (!Util.isStaff(assigneeMember as GuildMember)) {
-            interaction.reply({ content: `You are not able to assign a ${data.type} to a someone that is not a staff member`, ephemeral: true})
-            return;
-        }
+        const data = validation.data!;
+        const assignee = validation.who!;
 
         interaction.channel?.messages.fetch(data.header!).then(message => {
             const editedEmbed = new EmbedBuilder(message.embeds[0].data)
@@ -238,36 +180,18 @@ export class ticketCommand {
         interaction: CommandInteraction
     )
     // command execution
-    {
+    {   
 
-        // if channel isn't in support channel, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
+        const validation = await this.ValidateTicketCommand(interaction, {
+            category: true,
+            ifLocked: true,
+            added: who
+        });
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        if (!validation.ok) return;
 
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
-
-        if (data.status === "LOCKED") {
-            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
-            return;
-        }
-
-
-        const addedMember = await interaction.guild?.members.fetch(who.id)
-        const added = addedMember === undefined ? who : addedMember.user;
-
-        if (Util.isStaff(addedMember as GuildMember)) {
-            interaction.reply({ content: `You don't have to add a staff member... They already have access.`, ephemeral: true})
-            return;
-        }
+        const data = validation.data!;
+        const added = validation.who!;
 
         const viewers = JSON.parse(data.viewers === undefined ? "[]" : data.viewers as string);
         
@@ -332,34 +256,17 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if channel isn't in support channel, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
+        const validation = await this.ValidateTicketCommand(interaction, {
+            category: true,
+            ifLocked: true,
+            added: who,
+        });
 
-        if (data.status === "LOCKED") {
-            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
-            return;
-        }
+        if (!validation.ok) return;
 
-
-        const addedMember = await interaction.guild?.members.fetch(who.id)
-        const added = addedMember === undefined ? who : addedMember.user;
-
-        if (Util.isStaff(addedMember as GuildMember)) {
-            interaction.reply({ content: `You can't remove a staff member from this ${data.type}...`, ephemeral: true})
-            return;
-        }
+        const data = validation.data!;
+        const added = validation.who!;
 
         const viewers = JSON.parse(data.viewers === undefined ? "[]" : data.viewers as string);
         
@@ -430,37 +337,20 @@ export class ticketCommand {
     )
     // command execution
     {
-        // if channel isn't in support channel, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
-        
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
-        
-        const user = await interaction.guild?.members.fetch(data.user)
+        const validation = await this.ValidateTicketCommand(interaction, {
+            category: true,
+            ifLocked: true,
+            ifPending: true,
+            NotClaimedPending: true,
+            
+        });
 
-        if (data.status === "LOCKED") {
-            interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
-            return;
-        }
-        
-        if (data.status === "PENDING") {
-            interaction.reply({ content: `This ${data.type} is already pending.`, ephemeral: true})
-            return;
-        }
+        if (!validation.ok) return;
 
-        if (data.handler != interaction.user.id) {
-            interaction.reply({ content: `You can't set a ${data.type} that isn't claimed by you to pending.`, ephemeral: true})
-            return;
-        }
+        const data = validation.data!;
+
+        const user = await interaction.guild?.members.fetch(data.user);
         
         const pendingEmbed = new EmbedBuilder()
             .setTitle(`This ${data.type} is now pending.`)
@@ -506,20 +396,11 @@ export class ticketCommand {
     // command execution
     {
 
-        // if channel isn't in support channel, cancel
-        if (!await this.inValidCategory(interaction.guild?.channels, interaction.channelId)) {
-            interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
-            return;
-        }
+        const validation = await this.ValidateTicketCommand(interaction, {category: true});
 
-        // get channel data
-        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+        if (!validation.ok) return;
 
-        if (!data) {
-            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
-            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
-            return;
-        }
+        const data = validation.data!;
 
         if (data.header == null) {
             const ticketComponents: ActionRowBuilder<MessageActionRowComponentBuilder> 
@@ -767,25 +648,121 @@ export class ticketCommand {
             SendMessages: status
         })
     }
+
+    private async ValidateTicketCommand(interaction: CommandInteraction, conditions: {
+        category?: boolean,
+        force?: boolean,
+        notclaimedByYouWithForce?: boolean,
+        forceStatus?: boolean,
+        ifLocked?: boolean,
+        ifPending?: boolean,
+        NotClaimedPending?: boolean,
+        ifUnlocked?: boolean,
+        ifNotClaimed?: boolean,
+        notClaimedByYou?: boolean,
+        assignee?: User,
+        added?: User
     
-    /**
-     * checks if a channel is in a valid support category
-     * @param channels the channel manager to get the channel information from
-     * @param channelId the id of the channel the manager should fetch
-     * @returns true if channel is in valid support category
-     */
-    private async inValidCategory(channels: GuildChannelManager | undefined, channelId: string): Promise<boolean> {
-        if (channels === undefined) return false;
-
-        const channelInstance = await channels.fetch(channelId);
-        const categoryId = channelInstance?.parentId;
+    }): Promise<{ ok?: boolean, data?: TicketsEntity, who?: User }> {
+        let who = undefined;
+    
+        if (conditions.category) {
+    
+            const channels = interaction.guild?.channels;
+            const channelId = interaction.channelId;
         
-        // if channel isn't in support category, return false
-        if (categoryId != process.env.TICKET_CATEGORY && categoryId != process.env.COMMISSION_CATEGORY) {
-            return false;
+            if (channels === undefined) return { ok: false };
+    
+            const channelInstance = await channels.fetch(channelId);
+            const categoryId = channelInstance?.parentId;
+            
+            // if channel isn't in support category, return false
+            if (categoryId != process.env.TICKET_CATEGORY && categoryId != process.env.COMMISSION_CATEGORY) {
+                interaction.reply({ content: "This command can only be executed in a ticket/request channel.", ephemeral: true})
+                return { ok: false };
+            }
         }
-
-        return true;
+    
+        if (conditions.force) {
+            const isAdmin = Util.isAdmin(interaction.member as GuildMember);
+    
+            // if command is being forced by someone that isn't admin, cancel
+            if (conditions.forceStatus === true && isAdmin === false) {
+                interaction.reply({ content: "Forcing unclaim is an admin only action.", ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        // get channel data
+        const data = await AppDataSource.manager.findOneBy(TicketsEntity, {channel: interaction.channel?.id});
+    
+        if (!data) {
+            interaction.reply({ content: "Could not find the ticket data.\nMajor error has occured. Please report this to a manager.", ephemeral: true})
+            error(`Could not find the ticket data of channel ${interaction.channel?.id}. Request cancelled.\n Command Executor: ${interaction.user.username}`);
+            return { ok: false };
+        }
+    
+        if (conditions.ifLocked) {
+            if (data.status === "LOCKED") {
+                interaction.reply({ content: `This ${data.type} is locked. Locked ${data.type}s are not eligable to changes.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        if (conditions.ifNotClaimed) {
+            // if handler is null then the ticket is not claimed by anyone. So, cancel
+            if (data.handler === null) {
+                interaction.reply({ content: `This ${data.type} is not claimed by anyone. Failed to unclaim an unclaimed ${data.type}.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        if (conditions.notclaimedByYouWithForce) {
+            // if user doesn't own the ticket and forced is not true. Second check only is possible if user is admin
+            if (data.handler != interaction.user.id && conditions.forceStatus != true) {
+                interaction.reply({ content: `you can't unclaim a ${data.type} that isn't claimed by you.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+        
+        if (conditions.added) {
+            const addedMember = await interaction.guild?.members.fetch(conditions.added.id)
+            who = addedMember === undefined ? who : addedMember.user;
+    
+            if (Util.isStaff(addedMember as GuildMember)) {
+                interaction.reply({ content: `You can't modify a staff member's access to a support channel.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        if (conditions.assignee) {
+            const assigneeMember = await interaction.guild?.members.fetch(conditions.assignee.id);
+            who = assigneeMember === undefined ? conditions.assignee : assigneeMember.user;
+    
+            if (!Util.isStaff(assigneeMember as GuildMember)) {
+                interaction.reply({ content: `You are not able to assign a ${data.type} to a someone that is not a staff member`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        if (conditions.ifPending) {
+            if (data.status === "PENDING") {
+                interaction.reply({ content: `This ${data.type} is already pending.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        if (conditions.NotClaimedPending) {
+            if (data.handler != interaction.user.id) {
+                interaction.reply({ content: `You can't set a ${data.type} that isn't claimed by you to pending.`, ephemeral: true})
+                return { ok: false };
+            }
+        }
+    
+        return {
+            ok: true,
+            data: data,
+            who: who
+        }
     }
-
 }
