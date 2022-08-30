@@ -1,0 +1,17 @@
+{
+    "title":"<:diamond_shape:1013899470867537990> Reviewer",
+    "color": "#db8c58",
+    "description": "The <@&1000878482450026577> role is given to those who support our studio by reviewing one of our products with a review that is not biased or untrue and it follows our [rules](https://discord.com/channels/999634679172972646/1000891032818434108) regarding reviews.\n\nMost reviews if not all are posted in our reviews channel, and the reviews that earn a member the reviewer role will be marked with a golden color for more recognition.",
+    "fields": [
+        {
+          "name": "Requirement",
+          "value": "*Review one of our products*",
+          "inline": true
+        },
+        {
+          "name": "Available to",
+          "value": "*Everyone*",
+          "inline": true
+        }
+    ]
+}

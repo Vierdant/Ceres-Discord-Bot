@@ -27,6 +27,7 @@ export class ListTicketCommand {
     )
     // command execution
     {
+
         // get channel data
         const ticketCollection = await AppDataSource.getRepository(TicketsEntity).find({
             select: {

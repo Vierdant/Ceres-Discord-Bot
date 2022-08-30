@@ -1,0 +1,17 @@
+{
+    "title":"<:diamond_shape:1013899470867537990> MVP",
+    "color": "#6466c0",
+    "description": "The <@&1000878369514205285> role is given to those who **purchase 8 or more** products that are under the name of Returned Studios.\n\n**Perks**\n- Create private or public threads\n- Ability to open video camera in voice chats\n- Access to MVP discussion channels\n- Access to MVP gated giveaways (Chance to receive products for **free**!)\n- Access to Returned Forge server, where we test our beta products",
+    "fields": [
+        {
+          "name": "Requirement",
+          "value": "*Purchase 8 or more products*",
+          "inline": true
+        },
+        {
+          "name": "Available to",
+          "value": "*VIP Members*",
+          "inline": true
+        }
+    ]
+}

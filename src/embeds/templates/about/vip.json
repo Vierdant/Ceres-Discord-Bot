@@ -1,0 +1,17 @@
+{
+    "title":"<:diamond_shape:1013899470867537990> VIP",
+    "color": "#668ac7",
+    "description": "The <@&1000878258037989436> role is given to those who **purchase 3 or more** products that are under the name of Returned Studios.\n\n**Perks**\n- Embed Links in discussion channels\n- Attach/Send files in discussion channels\n- Talk in available threads\n- Play Activities (Discord games) in voice channels\n- Request to speak during active stages",
+    "fields": [
+        {
+          "name": "Requirement",
+          "value": "*Purchase 3 or more products*",
+          "inline": true
+        },
+        {
+          "name": "Available to",
+          "value": "*Everyone*",
+          "inline": true
+        }
+    ]
+}

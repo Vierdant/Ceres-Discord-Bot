@@ -1,0 +1,17 @@
+{
+    "title":"<:diamond_shape:1013899470867537990> Booster",
+    "color": "#d392da",
+    "description": "The <@&1000036253208678420> role is given to those who **boost the server at least once**.\n\n**Perks**\n- Access a role menu to choose one of 20+ colors for your name\n- All of the VIP Perks\n- Access to Booster gated giveaways (Chance to receive products for **free**!)\n\n**Note**\nThese perks are only available during the time the user is boosting the server, meaning they are not permanent and will be removed when the boosting stops.",
+    "fields": [
+        {
+          "name": "Requirement",
+          "value": "*Boost the server at least once*",
+          "inline": true
+        },
+        {
+          "name": "Available to",
+          "value": "*Discord Nitro Users*",
+          "inline": true
+        }
+    ]
+}
